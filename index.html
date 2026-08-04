@@ -1,0 +1,236 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>牙科好评生成器 · 扫码复制</title>
+<style>
+  :root{
+    --primary:#1c9c8e; --primary-dark:#147a6e; --bg:#f4f8f8;
+    --card:#fff; --text:#1f2d2b; --muted:#6b7d7a; --line:#e1eaea;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+  body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:var(--bg);color:var(--text);padding:16px;}
+  .container{max-width:520px;margin:0 auto;}
+  h1{font-size:20px;text-align:center;margin:8px 0 4px;color:var(--primary-dark);}
+  .sub{text-align:center;color:var(--muted);font-size:13px;margin-bottom:16px;}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:16px;margin-bottom:14px;box-shadow:0 2px 10px rgba(28,156,142,.06);}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;}
+  select,button{font-size:15px;padding:11px 14px;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--text);}
+  select{flex:1;min-width:120px;}
+  button{background:var(--primary);color:#fff;border:none;font-weight:600;cursor:pointer;flex:1;min-width:140px;}
+  button:active{background:var(--primary-dark);}
+  textarea, .review-text{width:100%;min-height:120px;border:1px solid var(--line);border-radius:10px;padding:12px;font-size:15px;line-height:1.7;resize:vertical;font-family:inherit;color:var(--text);background:#fff;word-break:break-all;}
+  .review-text{white-space:pre-wrap;}
+  .meta{display:flex;justify-content:space-between;align-items:center;margin-top:8px;color:var(--muted);font-size:12px;}
+  .qr-wrap{display:flex;justify-content:center;padding:14px 0 6px;}
+  .qr-wrap svg{width:240px;height:auto;}
+  .hint{text-align:center;color:var(--muted);font-size:13px;margin:6px 0 0;line-height:1.5;}
+  .step{display:flex;justify-content:space-around;color:var(--muted);font-size:12px;margin-top:12px;}
+  .step b{display:inline-block;width:18px;height:18px;line-height:18px;text-align:center;border-radius:50%;background:var(--primary);color:#fff;margin-right:4px;font-size:11px;}
+  .warn{color:#c0392b;text-align:center;font-size:13px;padding:10px;}
+  .big-btn{width:100%;padding:14px;font-size:16px;}
+  #copyTip{color:var(--primary-dark);font-weight:600;min-height:18px;}
+  .ai-input{width:100%;padding:10px 12px;margin-bottom:8px;border:1px solid var(--line);border-radius:10px;font-size:14px;font-family:inherit;}
+  button.ghost{background:#fff;color:var(--primary-dark);border:1px solid var(--primary);flex:0 0 auto;min-width:auto;padding:8px 12px;}
+  .note{font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px;}
+</style>
+</head>
+<body>
+
+<!-- ===== 生成端（无 #t= 时显示）===== -->
+<div id="genMode" class="container">
+  <h1>🦷 牙科好评生成器</h1>
+  <div class="sub">AI 随机生成 · 扫码打开网页复制 · 顾客零打字</div>
+
+  <div class="card">
+    <div class="row">
+      <select id="service">
+        <option value="">全部项目</option>
+        <option value="洗牙">洗牙</option>
+        <option value="补牙">补牙</option>
+        <option value="拔牙">拔牙 / 智齿</option>
+        <option value="种植牙">种植牙</option>
+        <option value="牙齿矫正">牙齿矫正</option>
+        <option value="根管治疗">根管治疗</option>
+        <option value="牙齿美白">牙齿美白</option>
+        <option value="儿童齿科">儿童齿科</option>
+      </select>
+      <button id="gen">AI 生成好评</button>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="row">
+      <label style="flex:1;display:flex;align-items:center;gap:8px;font-size:15px;font-weight:600;">
+        <input type="checkbox" id="aiOn" style="width:18px;height:18px;"> 接入真实 AI 生成
+      </label>
+      <button id="aiSave" class="ghost">保存配置</button>
+    </div>
+    <div id="aiFields" style="display:none;margin-top:12px;">
+      <div class="note">API 配置仅存本机浏览器，不上传服务器。注意：多数国内大模型禁止浏览器跨域(CORS)，若调用失败会自动回退模板；也可让 WorkBuddy 生成后粘贴到下方文本框。</div>
+      <input id="aiBase" class="ai-input" placeholder="API Base，如 https://api.deepseek.com/v1">
+      <input id="aiKey" class="ai-input" type="password" placeholder="API Key（Bearer Token）">
+      <input id="aiModel" class="ai-input" placeholder="模型名，如 deepseek-chat">
+    </div>
+  </div>
+
+  <div class="card">
+    <textarea id="text" placeholder="点击「AI 生成好评」生成内容，可手动微调"></textarea>
+    <div class="meta"><span id="count">0 字</span><span>建议 50–100 字</span></div>
+  </div>
+
+  <div class="card">
+    <div class="qr-wrap"><div id="qr"></div></div>
+    <div class="hint">顾客用微信或相机扫码 → 打开网页 → 点「一键复制」→ 粘贴美团</div>
+    <div class="step"><span><b>1</b>扫码</span><span><b>2</b>复制</span><span><b>3</b>粘贴</span></div>
+  </div>
+</div>
+
+<!-- ===== 顾客查看端（带 #t= 时显示）===== -->
+<div id="viewMode" class="container" style="display:none">
+  <h1>📋 复制评价</h1>
+  <div class="sub">长按文字也可复制</div>
+  <div class="card"><div id="viewText" class="review-text"></div></div>
+  <div class="card">
+    <button id="copyBtn" class="big-btn">一键复制</button>
+    <div id="copyTip" class="hint"></div>
+    <div class="hint">复制后打开美团 App，长按评价框粘贴即可</div>
+  </div>
+</div>
+
+<script src="./qrcode.min.js"></script>
+<script>
+/* ============ 假数据：模板化随机生成（可替换为真实 AI 接口）============ */
+const clinics = ["微笑口腔","美奥口腔","瑞尔齿科","拜博口腔","同步齿科","圣贝口腔","仁爱口腔","维乐口腔"];
+const doctors = ["医生专业又细心","医生手法很轻柔","主治医师经验丰富","医生讲解特别耐心","医生技术娴熟利落","医生全程很温柔"];
+const envs    = ["诊所环境干净整洁","前台服务态度超好","全程没有隐形消费","价格透明公道","设备很先进","预约方便快捷","消毒流程规范让人放心"];
+const extras  = ["关键是价格透明，没有乱收费","做完还有回访，服务很贴心","排队时间不长，效率挺高","整体体验超出预期","以后牙齿护理就认准这家了","预约很方便，不用等太久"];
+const endings = ["推荐有需要的朋友来","下次牙齿问题还来这家","值得信赖的口腔诊所","真心推荐，不会踩雷","周边牙科里性价比最高的"];
+const details = {
+  "洗牙":"洗的时候几乎不疼，牙龈也没怎么出血",
+  "补牙":"补完牙咬合很舒服，看不出痕迹",
+  "拔牙":"拔完牙恢复得很快，也没怎么肿",
+  "种植牙":"种植过程比想象中轻松，术后很稳",
+  "牙齿矫正":"矫正方案讲得很清楚，戴上也舒适",
+  "根管治疗":"根管治疗一点都不疼，保住了牙齿",
+  "牙齿美白":"美白效果明显，牙齿亮了好几个度",
+  "儿童齿科":"医生特别会哄孩子，娃一点都不抗拒"
+};
+const templates = [
+  p=>`今天在${p.clinic}做了${p.service}，${p.doctor}，${p.env}。${p.detail}，${p.extra}，${p.ending}。`,
+  p=>`${p.clinic}的${p.service}体验很赞，${p.doctor}，${p.env}。${p.detail}，${p.extra}。${p.ending}！`,
+  p=>`特意来${p.clinic}做${p.service}，${p.doctor}，${p.env}。${p.detail}，${p.extra}，${p.ending}。`,
+  p=>`在${p.clinic}做的${p.service}，${p.doctor}，关键是${p.env}。${p.detail}，${p.extra}，${p.ending}。`,
+  p=>`${p.clinic}做${p.service}，${p.doctor}，${p.env}。${p.detail}，${p.extra}，整体很满意，${p.ending}。`
+];
+function rand(a){ return a[Math.floor(Math.random()*a.length)]; }
+
+/* ============ 真实 AI 接入（可配置，密钥仅存本机）============ */
+function loadCfg(){ try{ return JSON.parse(localStorage.getItem('aiCfg')||'{}'); }catch(e){ return {}; } }
+function saveCfg(c){ localStorage.setItem('aiCfg', JSON.stringify(c)); }
+function aiGenerate(cfg){
+  const svc=document.getElementById('service').value||'牙科';
+  const prompt=`你是一位刚在牙科诊所消费完的顾客，请在美团上写一条真实好评。\n项目：${svc}\n要求：50-100字；口语化、自然、不夸张；不要写诊所名、电话、价格；只输出评价正文，不要引号和解释。`;
+  return fetch(cfg.base.replace(/\/$/,'')+'/chat/completions',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','Authorization':'Bearer '+cfg.key},
+    body:JSON.stringify({model:cfg.model,messages:[{role:'user',content:prompt}],temperature:0.9,max_tokens:200})
+  }).then(r=>{ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); }).then(d=>{
+    let t=(d.choices&&d.choices[0]&&d.choices[0].message&&d.choices[0].message.content||'').trim();
+    t=t.replace(/^["'「]|["'」]$/g,'').trim();
+    if(!t) throw new Error('返回为空');
+    return t;
+  });
+}
+function flash(msg){
+  let el=document.getElementById('flash');
+  if(!el){ el=document.createElement('div'); el.id='flash';
+    el.style.cssText='position:fixed;left:50%;bottom:24px;transform:translateX(-50%);background:#147a6e;color:#fff;padding:10px 16px;border-radius:10px;font-size:13px;z-index:99;box-shadow:0 4px 12px rgba(0,0,0,.2);max-width:90%';
+    document.body.appendChild(el); }
+  el.textContent=msg; el.style.display='block';
+  clearTimeout(el._t); el._t=setTimeout(()=>{ el.style.display='none'; },2800);
+}
+
+/* ============ 模式路由 ============ */
+const hash = location.hash;
+if(hash.startsWith('#t=')){
+  setupViewer(decodeURIComponent(hash.slice(3)));
+}else{
+  setupGenerator();
+}
+
+function setupGenerator(){
+  const textEl=document.getElementById('text'), qrEl=document.getElementById('qr'), countEl=document.getElementById('count');
+
+  function update(text){
+    textEl.value=text; countEl.textContent=text.length+' 字'; renderQR(text);
+  }
+  function renderQR(text){
+    if(!text){qrEl.innerHTML='';return;}
+    if(typeof qrcode==='undefined'){qrEl.innerHTML='<div class="warn">二维码组件未加载，请联网后刷新</div>';return;}
+    try{
+      // 关键点：二维码编码的是「网页 URL」，不是中文文本
+      const url = location.origin + location.pathname + '#t=' + encodeURIComponent(text);
+      const qr=qrcode(0,'M'); qr.addData(url); qr.make();
+      qrEl.innerHTML=qr.createSvgTag(6,2);
+    }catch(e){ qrEl.innerHTML='<div class="warn">内容过长，无法生成二维码</div>'; }
+  }
+  function templateGenerate(){
+    const svc=document.getElementById('service').value;
+    const service=svc||rand(Object.keys(details));
+    const p={clinic:rand(clinics),service,doctor:rand(doctors),env:rand(envs),detail:details[service],extra:rand(extras),ending:rand(endings)};
+    update(rand(templates)(p));
+  }
+  async function generate(){
+    const cfg=loadCfg();
+    if(document.getElementById('aiOn').checked && cfg.key && cfg.base && cfg.model){
+      try{ update(await aiGenerate(cfg)); return; }
+      catch(e){ flash('AI 调用失败：'+e.message+'，已用模板生成'); }
+    }
+    templateGenerate();
+  }
+
+  // AI 配置 UI
+  const aiOn=document.getElementById('aiOn'), aiFields=document.getElementById('aiFields');
+  aiOn.addEventListener('change',()=>{ aiFields.style.display=aiOn.checked?'block':'none'; });
+  document.getElementById('aiSave').addEventListener('click',()=>{
+    saveCfg({base:document.getElementById('aiBase').value.trim(),key:document.getElementById('aiKey').value.trim(),model:document.getElementById('aiModel').value.trim()});
+    flash('AI 配置已保存（仅本机）');
+  });
+  const saved=loadCfg();
+  document.getElementById('aiBase').value=saved.base||'';
+  document.getElementById('aiKey').value=saved.key||'';
+  document.getElementById('aiModel').value=saved.model||'';
+  if(saved.key){ aiOn.checked=true; aiFields.style.display='block'; }
+
+  document.getElementById('gen').addEventListener('click',generate);
+  textEl.addEventListener('input',()=>{countEl.textContent=textEl.value.length+' 字';renderQR(textEl.value);});
+  generate();
+}
+
+function setupViewer(text){
+  document.getElementById('genMode').style.display='none';
+  document.getElementById('viewMode').style.display='block';
+  document.getElementById('viewText').textContent=text;
+  const tip=document.getElementById('copyTip');
+  document.getElementById('copyBtn').addEventListener('click',()=>{
+    copyText(text).then(ok=>{ tip.textContent=ok?'已复制，去美团粘贴吧 ✓':'复制失败，请长按文字手动复制'; });
+  });
+}
+function copyText(t){
+  if(navigator.clipboard && navigator.clipboard.writeText){
+    return navigator.clipboard.writeText(t).then(()=>true).catch(()=>fallback(t));
+  }
+  return Promise.resolve(fallback(t));
+}
+function fallback(t){
+  try{
+    const ta=document.createElement('textarea'); ta.value=t; ta.style.position='fixed'; ta.style.top='-9999px';
+    document.body.appendChild(ta); ta.focus(); ta.select();
+    const ok=document.execCommand('copy'); document.body.removeChild(ta); return ok;
+  }catch(e){ return false; }
+}
+</script>
+</body>
+</html>
