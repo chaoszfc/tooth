@@ -58,6 +58,7 @@
       </select>
       <button id="gen">AI 生成好评</button>
     </div>
+    <input id="clinicName" class="ai-input" style="margin-top:10px;" placeholder="诊所名称（可选，留空则不显示店名）">
   </div>
 
   <div class="card">
@@ -100,13 +101,13 @@
 </div>
 
 <script src="./qrcode.min.js"></script>
+<script src="./backup-templates.js"></script>
 <script>
 /* ============ 假数据：模板化随机生成（可替换为真实 AI 接口）============ */
-const clinics = ["微笑口腔","美奥口腔","瑞尔齿科","拜博口腔","同步齿科","圣贝口腔","仁爱口腔","维乐口腔"];
 const doctors = ["医生专业又细心","医生手法很轻柔","主治医师经验丰富","医生讲解特别耐心","医生技术娴熟利落","医生全程很温柔"];
-const envs    = ["诊所环境干净整洁","前台服务态度超好","全程没有隐形消费","价格透明公道","设备很先进","预约方便快捷","消毒流程规范让人放心"];
+const envs    = ["院内环境干净整洁","前台服务态度超好","全程没有隐形消费","价格透明公道","设备很先进","预约方便快捷","消毒流程规范让人放心"];
 const extras  = ["关键是价格透明，没有乱收费","做完还有回访，服务很贴心","排队时间不长，效率挺高","整体体验超出预期","以后牙齿护理就认准这家了","预约很方便，不用等太久"];
-const endings = ["推荐有需要的朋友来","下次牙齿问题还来这家","值得信赖的口腔诊所","真心推荐，不会踩雷","周边牙科里性价比最高的"];
+const endings = ["推荐有需要的朋友来","下次牙齿问题还来这家","值得信赖，不会踩雷","真心推荐","周边性价比最高的","以后牙齿护理就认准这里了","附近看牙的首选"];
 const details = {
   "洗牙":"洗的时候几乎不疼，牙龈也没怎么出血",
   "补牙":"补完牙咬合很舒服，看不出痕迹",
@@ -117,12 +118,21 @@ const details = {
   "牙齿美白":"美白效果明显，牙齿亮了好几个度",
   "儿童齿科":"医生特别会哄孩子，娃一点都不抗拒"
 };
-const templates = [
+// 含店名模板（用户填写诊所名时使用）
+const templatesNamed = [
   p=>`今天在${p.clinic}做了${p.service}，${p.doctor}，${p.env}。${p.detail}，${p.extra}，${p.ending}。`,
   p=>`${p.clinic}的${p.service}体验很赞，${p.doctor}，${p.env}。${p.detail}，${p.extra}。${p.ending}！`,
   p=>`特意来${p.clinic}做${p.service}，${p.doctor}，${p.env}。${p.detail}，${p.extra}，${p.ending}。`,
   p=>`在${p.clinic}做的${p.service}，${p.doctor}，关键是${p.env}。${p.detail}，${p.extra}，${p.ending}。`,
   p=>`${p.clinic}做${p.service}，${p.doctor}，${p.env}。${p.detail}，${p.extra}，整体很满意，${p.ending}。`
+];
+// 不含店名模板（留空时使用）
+const templatesPlain = [
+  p=>`今天来做了${p.service}，${p.doctor}，${p.env}。${p.detail}，${p.extra}，${p.ending}。`,
+  p=>`${p.service}体验很赞，${p.doctor}，${p.env}。${p.detail}，${p.extra}。${p.ending}！`,
+  p=>`特意来做${p.service}，${p.doctor}，${p.env}。${p.detail}，${p.extra}，${p.ending}。`,
+  p=>`做的${p.service}，${p.doctor}，关键是${p.env}。${p.detail}，${p.extra}，${p.ending}。`,
+  p=>`做${p.service}，${p.doctor}，${p.env}。${p.detail}，${p.extra}，整体很满意，${p.ending}。`
 ];
 function rand(a){ return a[Math.floor(Math.random()*a.length)]; }
 
@@ -179,8 +189,17 @@ function setupGenerator(){
   function templateGenerate(){
     const svc=document.getElementById('service').value;
     const service=svc||rand(Object.keys(details));
-    const p={clinic:rand(clinics),service,doctor:rand(doctors),env:rand(envs),detail:details[service],extra:rand(extras),ending:rand(endings)};
-    update(rand(templates)(p));
+    const clinicName=document.getElementById('clinicName').value.trim();
+    if(clinicName){
+      const p={clinic:clinicName,service,doctor:rand(doctors),env:rand(envs),detail:details[service],extra:rand(extras),ending:rand(endings)};
+      update(rand(templatesNamed)(p)); return;
+    }
+    const backup=window.BACKUP_TEMPLATES||[];
+    if(backup.length && Math.random()<0.85){
+      update(rand(backup)); return;
+    }
+    const p={service,doctor:rand(doctors),env:rand(envs),detail:details[service],extra:rand(extras),ending:rand(endings)};
+    update(rand(templatesPlain)(p));
   }
   async function generate(){
     const cfg=loadCfg();
